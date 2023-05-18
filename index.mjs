@@ -44,11 +44,10 @@ export const handler = async (event, context, callback) => {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
     },
-    body: JSON.stringify(responseObject, (key, value) =>
-    typeof value === 'bigint'
-        ? value.toString()
-        : value // return everything else unchanged),
-    );
+    body: JSON.stringify(
+      responseObject,
+      (key, value) => (typeof value === "bigint" ? value.toString() : value) // return everything else unchanged),
+    ),
   };
 
   callback(null, response);
