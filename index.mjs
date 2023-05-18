@@ -17,10 +17,11 @@ export const handler = async (event, context, callback) => {
     const res = await catalogApi.searchCatalogItems({
       stockLevels: ["LOW"],
     });
-    const { matchedVariationIds } = res.result;
+    const { matchedVariationIds, items } = res.result;
     responseObject = {
       result: "success",
       ids: matchedVariationIds,
+      items,
     };
   } catch (error) {
     if (error instanceof ApiError) {
