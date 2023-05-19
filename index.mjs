@@ -18,10 +18,55 @@ export const handler = async (event, context, callback) => {
       stockLevels: ["LOW"],
     });
     const { matchedVariationIds, items } = res.result;
+    const responseItems = [];
+    if (
+      Array.isArray(items) &&
+      items.length > 0 &&
+      Array.isArray(matchedVariationIds) &&
+      matchedVariationIds.length > 0
+    ) {
+      matchedVariationIds.forEach((id) => {
+        // Find variation with matching id and set name
+        items.forEach((item) => {
+          item.itemData.variations.forEach((variation) => {
+            if (variation.id === id) {
+              const newObj = {
+                id,
+                name: variation.itemVariationData.name
+                  ? item.itemData.name + " " + variation.itemVariationData.name
+                  : item.itemData.name,
+              };
+              // Check target for matching variation
+              newObj.target =
+                item.hasOwnProperty("customAttributeValues") &&
+                item.customAttributeValues.hasOwnProperty(
+                  "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
+                )
+                  ? item.customAttributeValues[
+                      "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
+                    ].numberValue
+                  : null;
+              if (
+                variation.hasOwnProperty("customAttributeValues") &&
+                variation.customAttributeValues.hasOwnProperty(
+                  "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
+                )
+              )
+                newObj.target =
+                  variation.customAttributeValues[
+                    "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
+                  ].numberValue;
+              // Add new object to the array that's being sent back
+              responseItems.push(newObj);
+            }
+          });
+        });
+      });
+    }
     responseObject = {
       result: "success",
       ids: matchedVariationIds,
-      items,
+      items: responseItems,
     };
   } catch (error) {
     if (error instanceof ApiError) {
