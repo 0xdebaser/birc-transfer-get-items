@@ -15,7 +15,7 @@ export const handler = async (event, context, callback) => {
     const { catalogApi } = client;
 
     const res = await catalogApi.searchCatalogItems({
-      stockLevels: ["LOW"],
+      stockLevels: ["LOW", "OUT"],
       customAttributeFilters: [
         {
           customAttributeDefinitionId: "CXWR2ZRG6M5DVNDZXRWISFHU",
