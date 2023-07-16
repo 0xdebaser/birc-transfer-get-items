@@ -76,7 +76,7 @@ export const handler = async (event, context, callback) => {
                   newObj.trigger = location.hasOwnProperty(
                     "inventoryAlertThreshold"
                   )
-                    ? location.inventoryAlertThreshold
+                    ? parseInt(location.inventoryAlertThreshold)
                     : 0;
                 }
               }
