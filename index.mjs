@@ -6,6 +6,11 @@ export const handler = async (event, context, callback) => {
   let responseObject;
   let client;
 
+  const idsArray = [];
+  const itemsArray = [];
+
+  let calls = 1;
+
   try {
     if (!client)
       client = new Client({
@@ -14,8 +19,9 @@ export const handler = async (event, context, callback) => {
       });
     const { catalogApi } = client;
 
+    console.log(`API call #${calls}`);
+    calls++;
     const res = await catalogApi.searchCatalogItems({
-      stockLevels: ["LOW", "OUT"],
       customAttributeFilters: [
         {
           customAttributeDefinitionId: "CXWR2ZRG6M5DVNDZXRWISFHU",
@@ -25,55 +31,58 @@ export const handler = async (event, context, callback) => {
         },
       ],
     });
-    const { matchedVariationIds, items } = res.result;
+    let { matchedVariationIds, items, cursor } = res.result;
+    matchedVariationIds.forEach((id) => idsArray.push(id));
+    items.forEach((item) => itemsArray.push(item));
+
+    while (cursor) {
+      console.log(`API call #${calls}`);
+      console.log("cursor:", cursor);
+      calls++;
+      const res = await catalogApi.searchCatalogItems({
+        cursor,
+        customAttributeFilters: [
+          {
+            customAttributeDefinitionId: "CXWR2ZRG6M5DVNDZXRWISFHU",
+            numberFilter: {
+              min: "1",
+            },
+          },
+        ],
+      });
+      matchedVariationIds = res.result.matchedVariationIds;
+      items = res.result.items;
+      cursor = res.result.cursor;
+      matchedVariationIds.forEach((id) => idsArray.push(id));
+      items.forEach((item) => itemsArray.push(item));
+    }
+
     const responseItems = [];
-    if (
-      Array.isArray(items) &&
-      items.length > 0 &&
-      Array.isArray(matchedVariationIds) &&
-      matchedVariationIds.length > 0
-    ) {
-      matchedVariationIds.forEach((id) => {
-        // Find variation with matching id and set name
-        items.forEach((item) => {
-          item.itemData.variations.forEach((variation) => {
-            if (variation.id === id) {
-              const newObj = {
-                id,
-                name: variation.itemVariationData.name
-                  ? item.itemData.name + " " + variation.itemVariationData.name
-                  : item.itemData.name,
-              };
-              // Check target for matching variation
-              newObj.target =
-                item.hasOwnProperty("customAttributeValues") &&
-                item.customAttributeValues.hasOwnProperty(
-                  "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
-                )
-                  ? item.customAttributeValues[
-                      "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
-                    ].numberValue
-                  : null;
-              if (
-                variation.hasOwnProperty("customAttributeValues") &&
-                variation.customAttributeValues.hasOwnProperty(
-                  "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
-                )
-              )
-                newObj.target =
-                  variation.customAttributeValues[
-                    "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
-                  ].numberValue;
-              // Add new object to the array that's being sent back
-              responseItems.push(newObj);
-            }
-          });
+    idsArray.forEach((id) => {
+      const newObj = {};
+      newObj.id = id;
+      itemsArray.forEach((item) => {
+        item.itemData.variations.forEach((variation) => {
+          if (variation.id === id) {
+            newObj.name = (
+              item.itemData.name +
+              " " +
+              variation.itemVariationData.name
+            ).trim();
+            newObj.target = parseInt(
+              variation.customAttributeValues[
+                "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
+              ].numberValue
+            );
+          }
         });
       });
-    }
+      responseItems.push(newObj);
+    });
+
     responseObject = {
       result: "success",
-      ids: matchedVariationIds,
+      ids: idsArray,
       items: responseItems,
     };
   } catch (error) {
