@@ -5,6 +5,7 @@ import { Client, Environment, ApiError } from "square";
 export const handler = async (event, context, callback) => {
   let responseObject;
   let client;
+  const ALII_LOCATION_ID = "43FW6PWKP817H";
 
   const idsArray = [];
   const itemsArray = [];
