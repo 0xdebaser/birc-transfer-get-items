@@ -70,6 +70,17 @@ export const handler = async (event, context, callback) => {
               " " +
               variation.itemVariationData.name
             ).trim();
+            variation.itemVariationData.locationOverrides.forEach(
+              (location) => {
+                if (location.locationId === ALII_LOCATION_ID) {
+                  newObj.trigger = location.hasOwnProperty(
+                    "inventoryAlertThreshold"
+                  )
+                    ? location.inventoryAlertThreshold
+                    : 0;
+                }
+              }
+            );
             newObj.target = parseInt(
               variation.customAttributeValues[
                 "Square:ea60d4e4-4ed5-49fe-9abe-aec422c6bc7d"
